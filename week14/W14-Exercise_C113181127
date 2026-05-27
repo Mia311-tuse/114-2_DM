@@ -1,0 +1,84 @@
+# W14-Exercise
+## Error01
+ValueError: could not convert string to float: 'sales' 表示 df.corr() 方法嘗試對非數值型資料（特別是 'sales' 欄位，它包含字串值）計算相關性。corr() 方法只能處理數值型資料。
+為了解決這個問題，我修改了程式碼，在 df.corr() 方法中添加了 numeric_only=True。這樣做會指示 corr() 方法只考慮資料框中的數值型欄位來計算相關性，從而避免了嘗試將字串轉換為浮點數的錯誤。
+```
+#sns.heatmap(df.corr().round(2), annot=True, cmap='coolwarm');
+sns.heatmap(df.corr(numeric_only=True).round(2), annot=True, cmap='coolwarm');
+```
+這行程式碼的目的是繪製一個相關性熱力圖（heatmap），用來視覺化資料框 df 中各數值型欄位之間的相關性。具體來說：
+- df.corr(numeric_only=True): 計算資料框 df 中所有數值型欄位之間的皮爾遜相關係數。numeric_only=True 確保只對數值型欄位進行計算，避免非數值型欄位導致的錯誤。
+- .round(2): 將相關係數的結果四捨五入到小數點後兩位，使圖表更易讀
+- sns.heatmap(...): 使用 Seaborn 函式庫中的 heatmap 函式來繪製熱力圖。
+- annot=True: 在熱力圖的每個單元格中顯示相關係數的數值。
+- cmap='coolwarm': 設定熱力圖的顏色映射。'coolwarm' 是一種常見的色譜，通常用於表示正相關（暖色）和負相關（冷色），並且中間色表示接近零的相關性。
+
+## Error02
+df.drop('left', axis=1).corrwith(df['left']).round(2)
+df.drop('left', axis=1).select_dtypes(include=np.number).corrwith(df['left']).round(2)
+出現此錯誤的原因是該corrwith()方法試圖計算非數值型列（例如「銷售額」和「薪資」）的相關性。我將透過修改程式碼來解決此問題，使其在計算與「左側」列的相關性時僅考慮數值類型列。
+
+修改的程式碼 程式碼中使用了 Python 內建的 round() 函式來處理數值： print('正確率：', round(accuracy_score(y_test, y_pred), 2)) 這能確保數值正確四捨五入到小數點後兩位而不會報錯。
+
+程式碼的目的
+
+- 建立基準模型: 使用 DummyClassifier(strategy='most_frequent')。這個模型非常簡單，它會「無腦」地預測出現次數最多的類別（在此案例中是「未離職」）。
+- 評估基本門檻: 透過基準模型的正確率（約 0.76），我們可以知道任何進階的機器學習模型（如隨機森林或 XGBoost）其準確度必須顯著高於這個門檻才有價值。
+- 效能指標: 使用 confusion_matrix（混亂矩陣）與 classification_report（綜合報告）來觀察模型在各類別上的預測表現，從報告中可以看到基準模型對於少數類別（離職者）的預測能力為零。
+
+
+## Error 03
+print('正確率：', accuracy_score(y_test, y_pred).round(2))
+print('正確率：', round(accuracy_score(y_test, y_pred), 2))
+出現此錯誤的原因是標準的 Python 浮點物件沒有 `include`.round()方法。為了解決這個問題，我將改用內建round()函數。
+
+在 Python 中，accuracy_score 函式回傳的是標準的 Python float 型別，而 .round() 是 NumPy 或 Pandas 物件才有的方法，標準浮點數並不支援這種寫法。
+修改的程式碼 將原本的 accuracy_score(y_test, y_pred).round(2) 修改為使用 Python 內建的 round() 函式：
+```
+# 原本錯誤的寫法：
+# print('正確率：', accuracy_score(y_test, y_pred).round(2))
+
+# 修改後的正確寫法：
+print('正確率：', round(accuracy_score(y_test, y_pred), 2))
+```
+程式碼的目的 這段程式碼的目的是評估「虛擬分類器」（DummyClassifier）在測試集上的表現，作為模型效能的基準線（Baseline）：
+
+- accuracy_score(...): 計算模型預測的準確度（正確預測的比例）。
+- round(..., 2): 將計算出的準確度數值四捨五入到小數點後兩位，使輸出結果更簡潔易讀。
+- confusion_matrix: 產生混亂矩陣，觀察模型在各類別預測正確與錯誤的具體分佈。
+- classification_report: 顯示更詳細的評估指標，包括精確率（Precision）、召回率（Recall）和 F1 分數。
+
+## Error 04
+print('測試集的結果', score.round(3))
+print('測試集的結果', round(score, 3))
+出現此錯誤的原因是您試圖.round()對浮點數使用一種方法，而該方法不適用於標準的 Python 浮點數。我將透過使用全域round()函數來修正此錯誤。
+修改的程式碼 將原本的 變數.round(3) 修改為使用 Python 內建的 round(變數, 3) 函式：
+```
+# 原本錯誤的寫法：
+# print('訓練集交叉驗證的最佳結果', gs.best_score_.round(3))
+# print('測試集的結果', score.round(3))
+
+# 修改後的正確寫法：
+print('訓練集交叉驗證的最佳結果', round(gs.best_score_, 3))
+print('測試集的結果', round(score, 3))
+```
+程式碼的目的 這段程式碼的目的是利用 GridSearchCV 進行自動化模型篩選。它會遍歷邏輯迴歸、SVM、KNN 和決策樹，找出在訓練集上交叉驗證表現最好的模型，並在最後輸出該最佳模型的參數、訓練評分以及對測試集的預測準確度與混亂矩陣。
+
+
+
+## Error 05
+print('測試集的結果', score.round(3))
+print('測試集的結果', round(score, 3))
+出現此錯誤是因為您試圖.round()對浮點物件使用方法，而這不受支援。我將透過使用全域round()函數來修復此問題。
+
+修改的程式碼 應將 gs.best_score_.round(3) 修改為 round(gs.best_score_, 3)。正確的寫法如下：
+```
+print('訓練集交叉驗證的最佳結果', round(gs.best_score_, 3))
+print('測試集的結果', round(score, 3))
+```
+程式碼的目的 這段程式碼的目的是利用 GridSearchCV 進行「集成學習模型」的比較與參數優化：
+
+- 建立 Pipeline: 結合前處理 data_pl 與初始模型。
+- 定義搜尋空間: 設定 param_grid 來測試隨機森林、AdaBoost、Bagging 與 XGBoost 四種不同演算法。
+- 網格搜尋 (GridSearchCV): 透過 5 折交叉驗證 (cv=5) 找出在訓練集上表現最優的模型演算法。
+- 效能評估: 最後輸出最佳模型的參數、在訓練集交叉驗證的平均分數，以及在獨立測試集上的準確度與混亂矩陣。
